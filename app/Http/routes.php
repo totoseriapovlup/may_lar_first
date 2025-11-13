@@ -11,10 +11,47 @@
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+use \Illuminate\Http\Request;
+use \App\Models\Task;
 
-Route::get('/test', function () {
-    echo 'test';
-});
+Route::get('/', function () {
+    //home page
+    return view('welcome');
+})->name('home');
+
+Route::get('/tasks', function () {
+    //all tasks
+    return view('task.index', [
+        'tasks' => Task::all(),
+    ]);
+})->name('task.index');
+
+Route::get('/task/create', function (){
+    //create form
+    return view('task.create');
+})->name('task.create');
+
+Route::post('/task', function (Request $request){
+    //store
+    $validator = Validator::make($request->all(), [
+        'name' => 'required|max:255',
+    ]);
+
+    if($validator->fails()){
+        return redirect()
+            ->route('task.create')
+            ->withInput()
+            ->withErrors($validator);
+    }
+
+    $task = new Task();
+    $task->name = $request->name;
+    $task->save();
+    return redirect()->route('task.index');
+})->name('task.store');
+
+Route::delete('/task/{task}', function (Task $task){
+    //delete
+    $task->delete();
+    return redirect()->route('task.index');
+})->name('task.destroy');
